@@ -36,7 +36,36 @@ Pour faire propre, nous allons tout supprimer avec la commande suivante :
 
 Dernière modification, restaurer la configuration du vhost Apache dans sa configuration initiale et surtout supprimer toutes les références au SSL et aux certificats.  
 Pour celaiIl suffit de se référer à la configuration de base plus haut dans cette page. Je vous laisse faire.
+Les certifcats SSL Let's Encrypt sont valables pour 90 jours ... seulement. Mais il est possible de les renouveler.  
+Il va donc falloir créer une tâche CRON "qui va bien" afin de renouveler le certificat régulièrement :
 
+On passe en root :
+
+`sudo -s`
+
+Puis on ouvre le crontab :
+
+`crontab -e`
+
+Et on y place les lignes suvantes :
+
+`###Let's Encrypt  
+###Renouvellement auto du cerificat SSL  
+###Le 1er de chaque mois à 2h du matin  
+0 2 1 * * /home/mumbly/renewLetsEncrypt.sh >> /var/log/renewLetsEncrypt.log`
+
+Et on crée le fichier renewLetsEncrypt.sh que j'ai choisi de placer dans mon /home (mettez-le où vous voulez et changez le chemin). Je pars du postulat que vos fichiers Let's Encrypt sont dans /etc/letsencrypt (vous pourrez également trouver les logs dans  `/var/log/renewLetsEncrypt.log`) :
+
+`#!/bin/sh  
+cd /etc/letsencrypt/  
+./letsencrypt-auto certonly -a webroot --email monemailamoi@gmail.com -d www.monsite.com -d monsite.com --rsa-key-size 4096 --webroot-path /var/www/monsite.com/web --renew-by-default --agree-tos  
+/etc/init.d/nginx reload`
+
+On le rend exécutable :
+
+`chmod +x renewLetsEncrypt.sh`
+
+N'oubliez pas de changer l'adresse e-mail, le site web (avec www et/ou sans), et le repertoire web de votre site. On renouvelle par défaut (--renew-by-default) et on accepte "tout le reste" (--agree-tos).
 **Conclusion**  
 J’espère que ce tuto vous sera utile et que vous en aurez appris un peu plus sur le fonctionnement de Let’s Encrypt et globalement l’intégration d’un certificat SSL pour Apache. Car pour cette dernière partie, Let’s Encrypt ou autre, c’est exactement la même chose.  
 Si vous avez des remarques ou questions, n’hésitez pas à poster un commentaire.
